@@ -3,30 +3,48 @@ import PocketBase from "pocketbase";
 const url = "https://saving-stuff.pockethost.io";
 const client = new PocketBase(url);
 
-function get_all_secrets() {
-  return client
-    .collection("secrets")
-    .getList()
-    .then((result) => {
-      return result;
-    });
-}
-
-function get_secret_by_id(recordId) {
+/**
+ *
+ * @param {string} recordId Id of the record to get
+ * @returns {Promise<Record>} Record object
+ */
+export function get_secret_by_id(recordId) {
   return client.collection("secrets").getOne(recordId);
 }
 
-function update_secret_by_id(recordId, body = {}) {
+/**
+ *
+ * @param {string} recordId Id of the record to get
+ * @param {Promise<Record[]>} body Array of records
+ * @returns
+ */
+export function update_secret_by_id(recordId, body = {}) {
   return client.collection("secrets").update(recordId, body);
 }
 
-async function hit_secret(record_id) {
+/**
+ * When a user try to access a secret, we hit the secret to mark it as already open
+ * @param {string} record_id Id of the record to get
+ * @returns {Promise<Record>} Record object
+ */
+export async function hit_secret(record_id) {
   const secret = await get_secret_by_id(record_id);
   if (secret.already_open) return null;
   return await update_secret_by_id(record_id, { already_open: true });
 }
 
-export { get_all_secrets, get_secret_by_id, hit_secret };
+/**
+ * 
+ * @param {string} secret_content Content of the secret
+ * @returns {Promise<Record>} Record object created
+ */
+export async function create_secret(secret_content) {
+  if (!secret_content?.toString()) throw new Error("secret_content is required");
+
+  return client
+    .collection("secrets")
+    .create({ content: secret_content });
+}
 
 /*
 // Returns a paginated records list.
